@@ -651,24 +651,43 @@ const AdminPanel = () => {
                       <Label htmlFor="qrurl">QR Code Image URL</Label>
                       <Input id="qrurl" value={paymentSettings.qr_url} onChange={(e) => setPaymentSettings({ ...paymentSettings, qr_url: e.target.value })} placeholder="https://..." />
                       <div className="mt-2 flex items-center gap-2">
+                        <Label htmlFor="qr-file" className="cursor-pointer">
+                          <Button type="button" variant="outline" size="sm" asChild>
+                            <span>Choose File</span>
+                          </Button>
+                        </Label>
                         <input
                           id="qr-file"
                           type="file"
                           accept="image/*"
+                          className="hidden"
                           onChange={async (e) => {
                             const file = e.target.files?.[0];
                             if (!file) return;
                             try {
+                              setPaymentMessage('Uploading QR code...');
                               const filePath = `payment_qr/${Date.now()}_${file.name}`;
                               const { data, error } = await supabase.storage.from('images').upload(filePath, file, { upsert: true });
-                              if (error) throw error;
+                              if (error) {
+                                console.error('Upload error:', error);
+                                throw error;
+                              }
                               const { data: pub } = await supabase.storage.from('images').getPublicUrl(data.path);
                               setPaymentSettings((prev) => ({ ...prev, qr_url: pub.publicUrl }));
-                            } catch {}
+                              setPaymentMessage('QR code uploaded! Click "Save Settings" to save.');
+                              setTimeout(() => setPaymentMessage(null), 3000);
+                            } catch (err: any) {
+                              console.error('QR upload failed:', err);
+                              setPaymentMessage(`Upload failed: ${err.message || 'Check console for details'}`);
+                              setTimeout(() => setPaymentMessage(null), 5000);
+                            }
                           }}
                         />
                         {paymentSettings.qr_url ? (
-                          <img src={paymentSettings.qr_url} alt="QR preview" className="h-16 w-16 object-contain border rounded" />
+                          <div className="flex items-center gap-2">
+                            <img src={paymentSettings.qr_url} alt="QR preview" className="h-16 w-16 object-contain border rounded" />
+                            <span className="text-xs text-text-secondary">Preview</span>
+                          </div>
                         ) : null}
                       </div>
                     </div>

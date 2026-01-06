@@ -115,18 +115,23 @@ const PaymentPage = () => {
   const [qrUploadedUrl, setQrUploadedUrl] = useState<string>("");
   useEffect(() => {
     const load = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('payment_settings')
         .select('upi, bank, account, ifsc, qr_url')
         .eq('id', 1)
         .maybeSingle();
+      if (error) {
+        console.error('Error loading payment settings:', error);
+      }
       const upi = data?.upi || '';
       const bank = data?.bank || '';
       const account = data?.account || '';
       const ifsc = data?.ifsc || '';
+      const qrUrl = data?.qr_url || '';
+      console.log('Payment settings loaded:', { upi, qr_url: qrUrl });
       setUpiId(upi);
       setBankLine(`${bank}${bank && account ? ", " : ""}${account ? `A/C ${account}` : ''}${(bank||account) && ifsc ? ", " : ""}${ifsc ? `IFSC ${ifsc}` : ''}`);
-      setQrUploadedUrl(data?.qr_url || '');
+      setQrUploadedUrl(qrUrl);
     };
     load();
   }, []);
@@ -135,7 +140,16 @@ const PaymentPage = () => {
   const qrFallback = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=${encodeURIComponent(
     "upi://pay?pa=" + fallbackUpi + "&pn=DonateNow&am=" + amount
   )}`;
-  const qrSrc = qrUploadedUrl || qrFallback;
+  const qrSrc = qrUploadedUrl && qrUploadedUrl.trim() !== '' ? qrUploadedUrl : qrFallback;
+  
+  // Debug logging
+  useEffect(() => {
+    console.log('QR Code Debug:', {
+      qrUploadedUrl,
+      qrSrc,
+      usingFallback: !qrUploadedUrl || qrUploadedUrl.trim() === ''
+    });
+  }, [qrUploadedUrl, qrSrc]);
   
   const [copied, setCopied] = useState<string | null>(null);
 
@@ -216,7 +230,12 @@ const handleCopy = (text: string, label: string) => {
                           alt="UPI QR"
                           className="w-72 h-72 object-contain"
                           onError={(e) => {
+                            console.error('QR image failed to load:', qrSrc);
+                            console.log('Falling back to generated QR');
                             (e.currentTarget as HTMLImageElement).src = qrFallback;
+                          }}
+                          onLoad={() => {
+                            console.log('QR image loaded successfully:', qrSrc);
                           }}
                         />
                       </div>
