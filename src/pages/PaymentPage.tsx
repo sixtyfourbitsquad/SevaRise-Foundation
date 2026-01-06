@@ -28,19 +28,18 @@ const PaymentPage = () => {
   const [method, setMethod] = useState<"upi" | "crypto">("upi");
 
   // CoinGecko price state
-  const [prices, setPrices] = useState<{ usdt?: number; sol?: number; btc?: number }>({});
+  const [prices, setPrices] = useState<{ usdt?: number; sol?: number }>({});
 
   useEffect(() => {
     const fetchPrices = async () => {
       try {
         const res = await fetch(
-          "https://api.coingecko.com/api/v3/simple/price?ids=tether,solana,bitcoin&vs_currencies=inr"
+          "https://api.coingecko.com/api/v3/simple/price?ids=tether,solana&vs_currencies=inr"
         );
         const data = await res.json();
         setPrices({
           usdt: data.tether?.inr,
           sol: data.solana?.inr,
-          btc: data.bitcoin?.inr,
         });
       } catch (err) {
         console.error("Failed to fetch prices", err);
@@ -272,12 +271,12 @@ const handleCopy = (text: string, label: string) => {
         />
         <span className="font-semibold">USDT (TRC20):</span>
         <span className="font-mono break-all max-w-[200px] sm:max-w-[400px]">
-          TELME5PCo4eJdXiMDGjhbbfwbMa1Vpg8Zo
+          TB4unzi5oKGH6WfchzjBFfRmaWbMkZm2NN
         </span>
         <Button
           size="sm"
           variant="ghost"
-          onClick={() => handleCopy("TELME5PCo4eJdXiMDGjhbbfwbMa1Vpg8Zo", "usdt")}
+          onClick={() => handleCopy("TB4unzi5oKGH6WfchzjBFfRmaWbMkZm2NN", "usdt")}
           className="ml-2 p-1"
         >
           <Copy className="w-4 h-4" />
@@ -290,33 +289,6 @@ const handleCopy = (text: string, label: string) => {
         )}
       </div>
 
-      {/* BTC */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <img
-          src="https://assets.coingecko.com/coins/images/1/large/bitcoin.png"
-          className="w-6 h-6"
-        />
-        <span className="font-semibold">BTC (BEP20):</span>
-        <span className="font-mono break-all max-w-[200px] sm:max-w-[400px]">
-          0x9ba2786c73f3bc9e3e74069dcabdb8c7466355a7
-        </span>
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() =>
-            handleCopy("0x9ba2786c73f3bc9e3e74069dcabdb8c7466355a7", "btc")
-          }
-          className="ml-2 p-1"
-        >
-          <Copy className="w-4 h-4" />
-        </Button>
-        {copied === "btc" && <span className="text-green-600">Copied!</span>}
-        {prices.btc && (
-          <span className="ml-auto">
-            ≈ {(amount / prices.btc).toFixed(6)} BTC
-          </span>
-        )}
-      </div>
     </div>
   </div>
 )}
